@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script data-require="jquery@*" data-semver="2.1.4" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <meta charset="UTF-8">
+    <title>SSE Test</title>
+
+    <script>
+        window.addEventListener("load", function () {
+
+            if (window.EventSource) {
+                var source = new EventSource("http://localhost:9090/sse");
+                source.onmessage = function (event) {
+                    var json = eval('(' + event.data + ')');
+                    console.log(json);
+                };
+            } else {
+                console.log("Error: SSE not supported by browser!");
+            }
+
+        });
+
+    </script>
+
+</head>
+<body>
+
+
+<div>
+    <h1>SSE Test</h1>
+    <span id="value"></span>
+
+</div>
+
+
+</body>
+</html>
