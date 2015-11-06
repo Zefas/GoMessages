@@ -33,25 +33,22 @@ func (this *MessageRedistributor) ServeHTTP(w http.ResponseWriter, req *http.Req
 	}
 
 	topic := mux.Vars(req)["topic"]
-	ch := this.topicsContainer.GetTopicManager(topic).Subscribe(topic)
+	ch := this.topicsContainer.GetTopicManager(topic).Subscribe()
+	log.Printf("MessageRedistributor#ServeHTTP: subscribed via channel: %v\n", ch)
 
 	messageWriter := messageWriter{&w, flusher}
 	for {
-		time.Sleep(1 * time.Second)
 		select {
 		case <-timeoutCh:
 			log.Println("MessageRedistributor#ServeHTTP: Timeout!")
-			close(ch)
+			this.topicsContainer.GetTopicManager(topic).UnSubscribe(ch)
 			messageWriter.writeTimeout(w, flusher)
 			return
 		case newMessage := <-ch:
-			// TODO Implement, as nothing gets send right now
-			if newMessage != nil {
-				log.Println("MessageRedistributor#ServeHTTP: Received Message.")
-				messageWriter.writeNewMessage(newMessage, &w, flusher)
-			}
+			log.Println("MessageRedistributor#ServeHTTP: Received Message.")
+			messageWriter.writeNewMessage(&newMessage, &w, flusher)
 		default:
-			log.Println("MessageRedistributor#ServeHTTP: Waiting.")
+			// Do Nothing
 		}
 	}
 }
