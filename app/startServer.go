@@ -2,9 +2,9 @@ package app
 import (
 "github.com/gorilla/mux"
 "net/http"
-"fmt"
-"GoMessages/app/controllers"
+	"GoMessages/app/controllers"
 "GoMessages/app/messages"
+	"log"
 )
 
 
@@ -26,6 +26,6 @@ func StartServer() {
 	http.Handle("/", r)
 	err := http.ListenAndServe(":9090", nil);
 	if err != nil {
-		fmt.Println("Error while starting server!")
+		log.Fatal("Error while starting server!")
 	}
 }

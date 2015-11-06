@@ -5,10 +5,15 @@ import (
 	"time"
 	"GoMessages/app/infrastructure/sse"
 	"GoMessages/app/messages"
+	"log"
 )
 
 
 func NewMessageRedistributor(topicsContainer messages.ITopicsContainer) *MessageRedistributor {
+	if topicsContainer == nil {
+		panic("parameter cannot be nil.")
+	}
+
 	result := MessageRedistributor{}
 	result.topicsContainer = topicsContainer
 	return &result
@@ -35,14 +40,18 @@ func (this *MessageRedistributor) ServeHTTP(w http.ResponseWriter, req *http.Req
 		time.Sleep(1 * time.Second)
 		select {
 		case <-timeoutCh:
+			log.Println("MessageRedistributor#ServeHTTP: Timeout!")
 			close(ch)
 			messageWriter.writeTimeout(w, flusher)
 			return
-		default:
-			newMessage := <- ch
+		case newMessage := <-ch:
+			// TODO Implement, as nothing gets send right now
 			if newMessage != nil {
+				log.Println("MessageRedistributor#ServeHTTP: Received Message.")
 				messageWriter.writeNewMessage(newMessage, &w, flusher)
 			}
+		default:
+			log.Println("MessageRedistributor#ServeHTTP: Waiting.")
 		}
 	}
 }

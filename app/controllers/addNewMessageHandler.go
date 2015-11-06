@@ -1,15 +1,19 @@
 package controllers
 import (
 	"net/http"
-	"fmt"
 	"github.com/gorilla/mux"
 	"errors"
 	"GoMessages/app/infrastructure/httphelper"
 	"GoMessages/app/messages"
+	"log"
 )
 
 
 func NewAddNewMessageHandler(topicsContainer messages.ITopicsContainer) *AddNewMessageHandler {
+	if topicsContainer == nil {
+		panic("parameter cannot be nil.")
+	}
+
 	result := AddNewMessageHandler{}
 	result.topicsContainer = topicsContainer
 	return &result
@@ -22,13 +26,14 @@ type AddNewMessageHandler struct {
 func (this *AddNewMessageHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	data, err := parseRequest(req)
 	if err != nil {
-		fmt.Println("Error: Cannot read message.")
+		log.Fatal("Error: Cannot read message.")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Error Data."))
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 
+	log.Printf("AddNewMessageHandler#ServeHTTP: adding %v\n", data)
 	this.topicsContainer.AddMessage(data)
 }
 

@@ -16,7 +16,12 @@ type topicsContainer struct {
 }
 
 func (this *topicsContainer) GetTopicManager(topic string) *topicManager {
-	manager, _ := this.topicManagers[topic]
+	manager, exists := this.topicManagers[topic]
+	if !exists {
+		manager = newTopicManager(topic)
+		this.topicManagers[topic] = manager
+	}
+
 	return manager;
 }
 

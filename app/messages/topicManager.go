@@ -1,5 +1,7 @@
 package messages
-import "fmt"
+import (
+	"log"
+)
 
 
 func newTopicManager(topic string) *topicManager {
@@ -22,7 +24,7 @@ func (this *topicManager) Subscribe(topic string) chan *MessageOutput {
 
 func (this *topicManager) addMessage(message string)  {
 	// TODO Send to all subscribers
-	fmt.Printf("topicManager#AddMessage(): %s\n" + message)
+	log.Printf("topicManager#addMessage(): %s\n", message)
 }
 
 
