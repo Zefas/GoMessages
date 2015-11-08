@@ -33,18 +33,18 @@ func (this *MessageRedistributor) ServeHTTP(w http.ResponseWriter, req *http.Req
 	}
 
 	topic := mux.Vars(req)["topic"]
-	ch := this.topicsContainer.Subscribe(topic)
-	log.Printf("MessageRedistributor#ServeHTTP: subscribed via channel: %v\n", ch)
+	newMessagesCh := this.topicsContainer.Subscribe(topic)
+	log.Printf("MessageRedistributor#ServeHTTP: subscribed via channel: %v\n", newMessagesCh)
 
 	messageWriter := messageWriter{&w, flusher}
 	for {
 		select {
 		case <-timeoutCh:
 			log.Println("MessageRedistributor#ServeHTTP: Timeout!")
-			this.topicsContainer.UnSubscribe(topic, ch)
+			this.topicsContainer.UnSubscribe(topic, newMessagesCh)
 			messageWriter.writeTimeout(w, flusher)
 			return
-		case newMessage := <-ch:
+		case newMessage := <-newMessagesCh:
 			log.Println("MessageRedistributor#ServeHTTP: Received Message.")
 			messageWriter.writeNewMessage(&newMessage, &w, flusher)
 		default:

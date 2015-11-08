@@ -3,8 +3,8 @@ package messages
 
 type ITopicsContainer interface {
 	AddMessage(messageData *MessageInput)
-	Subscribe(topic string) chan MessageOutput
-	UnSubscribe(topic string, removeCh chan MessageOutput)
+	Subscribe(topic string) <-chan MessageOutput
+	UnSubscribe(topic string, removeCh <-chan MessageOutput)
 }
 
 func NewTopicsContainer() ITopicsContainer {
@@ -36,12 +36,13 @@ func (this *topicsContainer) AddMessage(messageData *MessageInput)  {
 	topicManager.addMessage(messageData.Message)
 }
 
-func (this *topicsContainer) Subscribe(topic string) chan MessageOutput {
-	topicManager := this.getTopicManager(topic)
-	return topicManager.subscribe()
+func (this *topicsContainer) Subscribe(topic string) <- chan MessageOutput {
+	//topicManager := this.getTopicManager(topic)
+	//return topicManager.subscribe()
+	return nil
 }
 
-func (this *topicsContainer) UnSubscribe(topic string, removeCh chan MessageOutput) {
+func (this *topicsContainer) UnSubscribe(topic string, removeCh <-chan MessageOutput) {
 	topicManager := this.getTopicManager(topic)
 	topicManager.unSubscribe(removeCh)
 }

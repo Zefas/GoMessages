@@ -5,28 +5,59 @@ import (
 
 
 func newTopicManager(topic string) *topicManager {
+	addMessageCh := make(chan string)
+	addSubscriberCh := make(chan chan MessageOutput)
+	unSubscribeCh := make(chan chan MessageOutput)
+	handle := topicManagerHandle{addMessageCh: addMessageCh, addSubscriberCh: addSubscriberCh, unSubscribeCh: unSubscribeCh}
+
 	return &topicManager{
 		topic: topic,
 		listeners: make([] chan MessageOutput, 0),
-		messageCounter: 0}
+		messageCounter: 0,
+		addMessageCh: addMessageCh, addSubscriberCh: addSubscriberCh, unSubscribeCh: unSubscribeCh,
+		handle: handle}
 }
 
-// TODO introduce channels as topicManager is not thread safe
 type topicManager struct {
-	topic          string
-	listeners      [] chan MessageOutput
-	messageCounter int
+	topic           string
+	listeners       [] chan MessageOutput
+	messageCounter  int
+
+	addMessageCh    <-chan string
+	addSubscriberCh <-chan chan MessageOutput
+	unSubscribeCh   <-chan chan MessageOutput
+
+	handle topicManagerHandle
 }
 
-func (this *topicManager) subscribe() chan MessageOutput {
+func (this * topicManager) getHandle() topicManagerHandle {
+	return this.handle
+}
+
+func (this *topicManager) startRunning() {
+	select {
+	case message := <-this.addMessageCh:
+		this.addMessage(message)
+	case newSubscriberCh := <-this.addSubscriberCh:
+		this.subscribe(newSubscriberCh)
+	case subscriberCh := <-this.unSubscribeCh:
+		this.unSubscribe(subscriberCh)
+	}
+}
+
+func (this *topicManager) subscribe(newSubscriberCh chan MessageOutput) {
+	this.listeners = append(this.listeners, newSubscriberCh)
+}
+
+/*func (this *topicManager) subscribe() chan MessageOutput {
 	topicCh := make(chan MessageOutput)
 	this.listeners = append(this.listeners, topicCh)
 
 	log.Printf("topicManager#Subscribe: adding chanel - '%v'\n", topicCh)
 	return topicCh
-}
+}*/
 
-func (this *topicManager) unSubscribe(removeCh chan MessageOutput) {
+func (this *topicManager) unSubscribe(removeCh <-chan MessageOutput) {
 	var indexToRemove int = -1
 	for index, ch := range this.listeners {
 		if removeCh == ch {
@@ -49,7 +80,6 @@ func (this *topicManager) addMessage(message string) {
 	this.messageCounter++
 
 	messageOutput := MessageOutput{this.messageCounter, message}
-	log.Printf("topicManager#addMessage: %v\n", this.listeners)
 
 	if len(this.listeners) <= 0 {
 		log.Println("topicManager#addMessage: No Listeneres to send to.");
