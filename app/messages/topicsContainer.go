@@ -1,4 +1,5 @@
 package messages
+import "log"
 
 
 type ITopicsContainer interface {
@@ -15,7 +16,7 @@ type topicsContainer struct {
 	topicManagers map[string]*topicManager
 }
 
-func (this *topicsContainer) getTopicManager(topic string) *topicManager {
+func (this *topicsContainer) findTopicManager(topic string) *topicManager {
 	manager, exists := this.topicManagers[topic]
 	if !exists {
 		manager = newTopicManager(topic)
@@ -25,25 +26,38 @@ func (this *topicsContainer) getTopicManager(topic string) *topicManager {
 	return manager;
 }
 
-
-func (this *topicsContainer) AddMessage(messageData *MessageInput)  {
-	topicManager, exists := this.topicManagers[messageData.Topic]
+func (this *topicsContainer) findOrCreateTopicManager(topic string) *topicManager {
+	topicManager, exists := this.topicManagers[topic]
 	if !exists {
-		topicManager = newTopicManager(messageData.Topic)
-		this.topicManagers[messageData.Topic] = topicManager
+		topicManager = newTopicManager(topic)
+		this.topicManagers[topic] = topicManager
+
+		log.Printf("topicsContainer#findOrCreateTopicManager: Starting new TopicManager '%v'.\n", topicManager)
+		go topicManager.startRunning()
 	}
 
-	topicManager.addMessage(messageData.Message)
+	return topicManager
+}
+
+func (this *topicsContainer) AddMessage(messageData *MessageInput)  {
+	topicManager := this.findOrCreateTopicManager(messageData.Topic)
+	log.Printf("topicsContainer#AddMessage: TopicManager - '%v'.\n", topicManager)
+
+	log.Printf("topicsContainer#AddMessage: Adding message via channel - '%v'.\n", topicManager.getHandle().addMessageCh)
+	topicManager.getHandle().addMessageCh <- messageData.Message
 }
 
 func (this *topicsContainer) Subscribe(topic string) <- chan MessageOutput {
-	//topicManager := this.getTopicManager(topic)
-	//return topicManager.subscribe()
-	return nil
+	topicManager := this.findOrCreateTopicManager(topic)
+	log.Printf("topicsContainer#Subscribe: TopicManager - '%v'.\n", topicManager)
+
+	listenToMessagesCh := make(chan MessageOutput)
+	topicManager.getHandle().addSubscriberCh <- listenToMessagesCh
+	return listenToMessagesCh
 }
 
 func (this *topicsContainer) UnSubscribe(topic string, removeCh <-chan MessageOutput) {
-	topicManager := this.getTopicManager(topic)
+	topicManager := this.findTopicManager(topic)
 	topicManager.unSubscribe(removeCh)
 }
 

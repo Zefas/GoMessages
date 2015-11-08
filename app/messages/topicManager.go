@@ -35,38 +35,43 @@ func (this * topicManager) getHandle() topicManagerHandle {
 }
 
 func (this *topicManager) startRunning() {
-	select {
-	case message := <-this.addMessageCh:
-		this.addMessage(message)
-	case newSubscriberCh := <-this.addSubscriberCh:
-		this.subscribe(newSubscriberCh)
-	case subscriberCh := <-this.unSubscribeCh:
-		this.unSubscribe(subscriberCh)
+	for {
+		select {
+		case message := <-this.addMessageCh:
+			log.Printf("topicManager#startRunning: Received message - '%s'\n", message)
+			this.addMessage(message)
+		case listenerCh := <-this.addSubscriberCh:
+			log.Printf("topicManager#startRunning: New Subscriber '%v'.\n", listenerCh)
+			this.subscribe(listenerCh)
+		case listenerCh := <-this.unSubscribeCh:
+			log.Printf("topicManager#startRunning: Unsubscribing '%v'.\n", listenerCh)
+			this.unSubscribe(listenerCh)
+
+			// Stop running if no listeners
+			if len(this.listeners) == 0 {
+				log.Printf("topicManager#startRunning: No Listeners - Exit.\n")
+				return
+			}
+		}
 	}
+
+	panic("topicManager#startRunning: Should never reach this!.\n")
 }
 
-func (this *topicManager) subscribe(newSubscriberCh chan MessageOutput) {
-	this.listeners = append(this.listeners, newSubscriberCh)
+func (this *topicManager) subscribe(listenToMessagesCh chan MessageOutput) {
+	this.listeners = append(this.listeners, listenToMessagesCh)
 }
 
-/*func (this *topicManager) subscribe() chan MessageOutput {
-	topicCh := make(chan MessageOutput)
-	this.listeners = append(this.listeners, topicCh)
-
-	log.Printf("topicManager#Subscribe: adding chanel - '%v'\n", topicCh)
-	return topicCh
-}*/
-
-func (this *topicManager) unSubscribe(removeCh <-chan MessageOutput) {
+func (this *topicManager) unSubscribe(listenToMessagesCh <-chan MessageOutput) {
 	var indexToRemove int = -1
 	for index, ch := range this.listeners {
-		if removeCh == ch {
+		if listenToMessagesCh == ch {
 			indexToRemove = index
 		}
 	}
 
 	if indexToRemove >= 0 {
-		log.Printf("topicManager#UnSubscribe: Removing channel - '%v'.\n", removeCh)
+		log.Printf("topicManager#UnSubscribe: Removing channel - '%v'.\n", listenToMessagesCh)
 		this.listeners = append(this.listeners[:indexToRemove], this.listeners[indexToRemove + 1:]...)
 	} else {
 		log.Println("topicManager#UnSubscribe: Cannot find channel to remove.")
