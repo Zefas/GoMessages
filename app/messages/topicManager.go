@@ -11,13 +11,14 @@ func newTopicManager(topic string) *topicManager {
 		messageCounter: 0}
 }
 
+// TODO introduce channels as topicManager is not thread safe
 type topicManager struct {
 	topic          string
 	listeners      [] chan MessageOutput
 	messageCounter int
 }
 
-func (this *topicManager) Subscribe() chan MessageOutput {
+func (this *topicManager) subscribe() chan MessageOutput {
 	topicCh := make(chan MessageOutput)
 	this.listeners = append(this.listeners, topicCh)
 
@@ -25,7 +26,7 @@ func (this *topicManager) Subscribe() chan MessageOutput {
 	return topicCh
 }
 
-func (this *topicManager) UnSubscribe(removeCh chan MessageOutput) {
+func (this *topicManager) unSubscribe(removeCh chan MessageOutput) {
 	var indexToRemove int = -1
 	for index, ch := range this.listeners {
 		if removeCh == ch {
