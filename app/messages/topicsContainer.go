@@ -41,14 +41,12 @@ func (this *topicsContainer) AddMessage(messageData *MessageInput)  {
 		return
 	}
 
-	log.Printf("topicsContainer#AddMessage: Adding message to topic - '%s'.\n", messageData.Topic)
 	topicManager.getHandle().addMessageCh <- messageData.Message
 }
 
 
 func (this *topicsContainer) Subscribe(topic string) <- chan MessageOutput {
 	topicManager := this.findOrCreateTopicManager(topic)
-	log.Printf("topicsContainer#Subscribe: TopicManager - '%v'.\n", topicManager)
 
 	listenToMessagesCh := make(chan MessageOutput)
 	topicManager.getHandle().addSubscriberCh <- listenToMessagesCh

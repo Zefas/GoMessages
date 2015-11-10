@@ -34,7 +34,6 @@ func (this *MessageRedistributor) ServeHTTP(w http.ResponseWriter, req *http.Req
 
 	topic := mux.Vars(req)["topic"]
 	newMessagesCh := this.topicsContainer.Subscribe(topic)
-	log.Printf("MessageRedistributor#ServeHTTP: subscribed via channel: %v\n", newMessagesCh)
 
 	messageWriter := messageWriter{&w, flusher}
 	for {

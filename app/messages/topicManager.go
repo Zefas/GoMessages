@@ -76,7 +76,6 @@ func (this *topicManager) unSubscribe(listenToMessagesCh <-chan MessageOutput) {
 	}
 
 	if indexToRemove >= 0 {
-		log.Printf("topicManager#UnSubscribe: Removing channel - '%v'.\n", listenToMessagesCh)
 		this.listeners = append(this.listeners[:indexToRemove], this.listeners[indexToRemove + 1:]...)
 	} else {
 		log.Println("topicManager#UnSubscribe: Cannot find channel to remove.")
@@ -84,7 +83,6 @@ func (this *topicManager) unSubscribe(listenToMessagesCh <-chan MessageOutput) {
 }
 
 func (this *topicManager) addMessage(message string) {
-	log.Printf("topicManager#addMessage(): %s\n", message)
 
 	// TODO This is not "Goroutine-Safe" I guess
 	this.messageCounter++
@@ -97,7 +95,6 @@ func (this *topicManager) addMessage(message string) {
 
 	for _, listenerCh := range this.listeners {
 		if listenerCh != nil {
-			log.Printf("topicManager#addMessage: sending to chanel - %v\n", listenerCh)
 			listenerCh <- messageOutput
 		}
 	}
