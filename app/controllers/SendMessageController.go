@@ -31,6 +31,7 @@ func (this *AddNewMessageHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 		w.Write([]byte("Error Data."))
 		return
 	}
+	w.Header().Add("Access-Control-Allow-Origin", "*");
 	w.WriteHeader(http.StatusNoContent)
 
 	log.Printf("AddNewMessageHandler#ServeHTTP: adding %v\n", data)
