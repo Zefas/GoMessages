@@ -44,7 +44,6 @@ func (this *MessageRedistributor) ServeHTTP(w http.ResponseWriter, req *http.Req
 			messageWriter.writeTimeout(w, flusher)
 			return
 		case newMessage := <-newMessagesCh:
-			log.Println("MessageRedistributor#ServeHTTP: Received Message.")
 			messageWriter.writeNewMessage(&newMessage, &w, flusher)
 		}
 	}

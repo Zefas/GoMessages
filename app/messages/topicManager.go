@@ -40,13 +40,13 @@ func (this *topicManager) startRunning() {
 	for {
 		select {
 		case message := <-this.addMessageCh:
-			log.Printf("topicManager#startRunning: Received message - '%s'\n", message)
+			log.Printf("topicManager#startRunning: Received message '%s' for topic '%s'.\n", message, this.topic)
 			this.addMessage(message)
 		case listenerCh := <-this.addSubscriberCh:
-			log.Printf("topicManager#startRunning: New Subscriber '%v'.\n", listenerCh)
+			log.Printf("topicManager#startRunning: New Subscriber '%v' for topic '%s'.\n", listenerCh, this.topic)
 			this.subscribe(listenerCh)
 		case listenerCh := <-this.unSubscribeCh:
-			log.Printf("topicManager#startRunning: Unsubscribing '%v'.\n", listenerCh)
+			log.Printf("topicManager#startRunning: Unsubscribing '%v' from topic '%s'.\n", listenerCh, this.topic)
 			this.unSubscribe(listenerCh)
 
 			// Stop running if no listeners

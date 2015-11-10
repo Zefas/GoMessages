@@ -25,7 +25,7 @@ func (this *topicsContainer) findOrCreateTopicManager(topic string) *topicManage
 		topicManager = newTopicManager(topic, this.topicExitAnnouncementCh)
 		this.topicManagers[topic] = topicManager
 
-		log.Printf("topicsContainer#findOrCreateTopicManager: Starting new TopicManager '%v'.\n", topicManager)
+		log.Printf("topicsContainer#findOrCreateTopicManager: Starting new TopicManager for topic '%s'.\n", topic)
 		go topicManager.startRunning()
 	}
 
