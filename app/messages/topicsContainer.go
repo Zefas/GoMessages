@@ -9,27 +9,20 @@ type ITopicsContainer interface {
 }
 
 func NewTopicsContainer() ITopicsContainer {
-	return &topicsContainer{make(map[string]*topicManager)}
+	return &topicsContainer{
+		topicManagers: make(map[string]*topicManager),
+		topicExitAnnouncementCh: make(chan unSubscribeResult)}
 }
 
 type topicsContainer struct {
-	topicManagers map[string]*topicManager
-}
-
-func (this *topicsContainer) findTopicManager(topic string) *topicManager {
-	manager, exists := this.topicManagers[topic]
-	if !exists {
-		manager = newTopicManager(topic)
-		this.topicManagers[topic] = manager
-	}
-
-	return manager;
+	topicManagers           map[string]*topicManager
+	topicExitAnnouncementCh chan unSubscribeResult
 }
 
 func (this *topicsContainer) findOrCreateTopicManager(topic string) *topicManager {
 	topicManager, exists := this.topicManagers[topic]
 	if !exists {
-		topicManager = newTopicManager(topic)
+		topicManager = newTopicManager(topic, this.topicExitAnnouncementCh)
 		this.topicManagers[topic] = topicManager
 
 		log.Printf("topicsContainer#findOrCreateTopicManager: Starting new TopicManager '%v'.\n", topicManager)
@@ -40,12 +33,18 @@ func (this *topicsContainer) findOrCreateTopicManager(topic string) *topicManage
 }
 
 func (this *topicsContainer) AddMessage(messageData *MessageInput)  {
-	topicManager := this.findOrCreateTopicManager(messageData.Topic)
-	log.Printf("topicsContainer#AddMessage: TopicManager - '%v'.\n", topicManager)
+	topicManager, exists := this.topicManagers[messageData.Topic]
+	if !exists {
+		log.Printf(
+			"topicsContainer#AddMessage: TopicManager '%s' is not running as there are no listeners, message '%s' will be ignored.\n",
+			messageData.Topic, messageData.Message);
+		return
+	}
 
-	log.Printf("topicsContainer#AddMessage: Adding message via channel - '%v'.\n", topicManager.getHandle().addMessageCh)
+	log.Printf("topicsContainer#AddMessage: Adding message to topic - '%s'.\n", messageData.Topic)
 	topicManager.getHandle().addMessageCh <- messageData.Message
 }
+
 
 func (this *topicsContainer) Subscribe(topic string) <- chan MessageOutput {
 	topicManager := this.findOrCreateTopicManager(topic)
@@ -57,7 +56,21 @@ func (this *topicsContainer) Subscribe(topic string) <- chan MessageOutput {
 }
 
 func (this *topicsContainer) UnSubscribe(topic string, removeCh <-chan MessageOutput) {
-	topicManager := this.findTopicManager(topic)
-	topicManager.unSubscribe(removeCh)
+	topicManager, exists := this.topicManagers[topic]
+	if exists {
+		topicManager.getHandle().unSubscribeCh <- removeCh
+
+		answer := <- this.topicExitAnnouncementCh
+
+		if(answer.stopped) {
+			delete(this.topicManagers, topic)
+		}
+	}
 }
+
+type unSubscribeResult struct {
+	topic string
+	stopped bool
+}
+
 

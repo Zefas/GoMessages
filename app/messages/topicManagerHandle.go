@@ -3,8 +3,8 @@ package messages
 
 type topicManagerHandle struct {
 	addMessageCh       chan<- string
-	addSubscriberCh    chan<- chan MessageOutput
-	unSubscribeCh      chan<- chan MessageOutput
+	addSubscriberCh    chan<- (chan MessageOutput)
+	unSubscribeCh      chan<- (<-chan MessageOutput)
 }
 
 func (this *topicManagerHandle) subscribe() {

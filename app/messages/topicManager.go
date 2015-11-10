@@ -4,16 +4,17 @@ import (
 )
 
 
-func newTopicManager(topic string) *topicManager {
+func newTopicManager(topic string, informAboutExitCh chan<- unSubscribeResult) *topicManager {
 	addMessageCh := make(chan string)
 	addSubscriberCh := make(chan chan MessageOutput)
-	unSubscribeCh := make(chan chan MessageOutput)
+	unSubscribeCh := make(chan (<-chan MessageOutput))
 	handle := topicManagerHandle{addMessageCh: addMessageCh, addSubscriberCh: addSubscriberCh, unSubscribeCh: unSubscribeCh}
 
 	return &topicManager{
 		topic: topic,
 		listeners: make([] chan MessageOutput, 0),
 		messageCounter: 0,
+		informAboutExitCh: informAboutExitCh,
 		addMessageCh: addMessageCh, addSubscriberCh: addSubscriberCh, unSubscribeCh: unSubscribeCh,
 		handle: handle}
 }
@@ -23,9 +24,10 @@ type topicManager struct {
 	listeners       [] chan MessageOutput
 	messageCounter  int
 
+	informAboutExitCh chan<- unSubscribeResult
 	addMessageCh    <-chan string
-	addSubscriberCh <-chan chan MessageOutput
-	unSubscribeCh   <-chan chan MessageOutput
+	addSubscriberCh <-chan (chan MessageOutput)
+	unSubscribeCh   <-chan (<-chan MessageOutput)
 
 	handle topicManagerHandle
 }
@@ -50,7 +52,10 @@ func (this *topicManager) startRunning() {
 			// Stop running if no listeners
 			if len(this.listeners) == 0 {
 				log.Printf("topicManager#startRunning: No Listeners - Exit.\n")
+				this.informAboutExitCh <- unSubscribeResult{topic: this.topic, stopped: true}
 				return
+			} else {
+				this.informAboutExitCh <- unSubscribeResult{topic: this.topic, stopped: false}
 			}
 		}
 	}
