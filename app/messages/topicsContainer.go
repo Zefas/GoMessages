@@ -17,6 +17,7 @@ func NewTopicsContainer() ITopicsContainer {
 type topicsContainer struct {
 	topicManagers           map[string]*topicManager
 	topicExitAnnouncementCh chan unSubscribeResult
+	topicManagersStarted int
 }
 
 func (this *topicsContainer) findOrCreateTopicManager(topic string) *topicManager {
@@ -27,6 +28,7 @@ func (this *topicsContainer) findOrCreateTopicManager(topic string) *topicManage
 
 		log.Printf("topicsContainer#findOrCreateTopicManager: Starting new TopicManager for topic '%s'.\n", topic)
 		go topicManager.startRunning()
+		this.topicManagersStarted += 1
 	}
 
 	return topicManager

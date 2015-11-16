@@ -1,6 +1,8 @@
 package messages
 import (
 	"testing"
+	"time"
+	"fmt"
 )
 
 func TestTopicManagerShouldNotStartWithoutSubscribersWhenMessageIsSent(t *testing.T) {
@@ -72,8 +74,66 @@ func TestMultipleManagerWorks(t *testing.T) {
 	}
 }
 
+func TestTopicManagerCreationShouldBeSynchronized(t *testing.T) {
+	c := NewTopicsContainer()
 
+	iterationCount := 30
+	for i := 0; i < iterationCount; i++ {
+		go subscribeSimultaneously(c, fmt.Sprintf("topic0%d", i), 200 * time.Millisecond)
+	}
 
+	time.Sleep(600 * time.Millisecond)
+
+	cast, _ := c.(*topicsContainer)
+	if cast.topicManagersStarted != iterationCount {
+		t.Fatalf("Race Condition - same topic manager were started at the same time. Expected - %d, got - %d", iterationCount, cast.topicManagersStarted)
+	}
+}
+
+func subscribeSimultaneously(c ITopicsContainer, topic string, duration time.Duration) {
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+	time.AfterFunc(duration, func() {
+		c.Subscribe(topic)
+	})
+}
 
 
 
