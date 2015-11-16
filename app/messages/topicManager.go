@@ -1,6 +1,7 @@
 package messages
 import (
 	"log"
+	"sync/atomic"
 )
 
 
@@ -22,7 +23,7 @@ func newTopicManager(topic string, informAboutExitCh chan<- unSubscribeResult) *
 type topicManager struct {
 	topic           string
 	listeners       [] chan MessageOutput
-	messageCounter  int
+	messageCounter  uint64
 
 	informAboutExitCh chan<- unSubscribeResult
 	addMessageCh    <-chan string
@@ -67,6 +68,7 @@ func (this *topicManager) subscribe(listenToMessagesCh chan MessageOutput) {
 	this.listeners = append(this.listeners, listenToMessagesCh)
 }
 
+
 func (this *topicManager) unSubscribe(listenToMessagesCh <-chan MessageOutput) {
 	var indexToRemove int = -1
 	for index, ch := range this.listeners {
@@ -84,10 +86,9 @@ func (this *topicManager) unSubscribe(listenToMessagesCh <-chan MessageOutput) {
 
 func (this *topicManager) addMessage(message string) {
 
-	// TODO This is not "Goroutine-Safe" I guess
-	this.messageCounter++
+	this.messageCounter = atomic.AddUint64(&this.messageCounter, 1)
 
-	messageOutput := MessageOutput{this.messageCounter, message}
+	messageOutput := MessageOutput{int(this.messageCounter), message}
 
 	if len(this.listeners) <= 0 {
 		log.Println("topicManager#addMessage: No Listeneres to send to.");
