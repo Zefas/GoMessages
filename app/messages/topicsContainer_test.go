@@ -11,7 +11,7 @@ func TestTopicManagerShouldNotStartWithoutSubscribersWhenMessageIsSent(t *testin
 	c.AddMessage(&MessageInput{"topic01", "Message01"})
 
 	cast, _ := c.(*topicsContainer)
-	_, exists := cast.topicManagers["topic01"]
+	_, exists := cast.topicManagers.Get("topic01")
 	if exists {
 		t.Error("Topic Manager should not exist without subscribers.")
 	}
@@ -32,7 +32,7 @@ func TestOneManagerWorks(t *testing.T) {
 	c.UnSubscribe("topic01", s2)
 
 	cast, _ := c.(*topicsContainer)
-	_, exists := cast.topicManagers["topic01"]
+	_, exists := cast.topicManagers.Get("topic01")
 	if exists {
 		t.Error("Topic Manager should be closed after last subscriber.")
 	}
@@ -58,17 +58,17 @@ func TestMultipleManagerWorks(t *testing.T) {
 	c.UnSubscribe("topic03", s3)
 
 	cast, _ := c.(*topicsContainer)
-	_, exists := cast.topicManagers["topic01"]
+	_, exists := cast.topicManagers.Get("topic01")
 	if exists {
 		t.Error("Topic Manager should be closed after last subscriber.")
 	}
 	cast, _ = c.(*topicsContainer)
-	_, exists = cast.topicManagers["topic02"]
+	_, exists = cast.topicManagers.Get("topic02")
 	if exists {
 		t.Error("Topic Manager should be closed after last subscriber.")
 	}
 	cast, _ = c.(*topicsContainer)
-	_, exists = cast.topicManagers["topic03"]
+	_, exists = cast.topicManagers.Get("topic03")
 	if exists {
 		t.Error("Topic Manager should be closed after last subscriber.")
 	}
