@@ -1,7 +1,6 @@
 package messages
 
 
-
 type MessageInput struct {
 	Topic string
 	Message string
